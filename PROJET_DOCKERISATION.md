@@ -1,480 +1,698 @@
-# Énoncé de Projet : Dockerisation et Déploiement de l'Application Todo
+# Énoncé de Projet : Dockerisation et Optimisation de l'Application Todo
 
 ## 1. Contexte du Projet
 
-L'application Todo Node.js existante nécessite une containerisation complète avec Docker pour assurer une portabilité, une sécurité renforcée et un déploiement automatisé. Ce projet vise à mettre en place une infrastructure moderne de déploiement continu.
+L'application Todo Node.js existante nécessite une containerisation avec Docker pour assurer une portabilité optimale. Ce projet vise à créer une image Docker optimisée et sécurisée, en appliquant les meilleures pratiques de l'industrie.
+
+**Durée estimée** : 7 heures
+**Niveau** : Intermédiaire
 
 ## 2. Objectifs du Projet
 
 ### 2.1 Objectifs Principaux
 - Containeriser l'application avec Docker
-- Optimiser les images Docker pour réduire la taille et améliorer les performances
+- Optimiser l'image Docker pour réduire la taille et améliorer les performances
 - Implémenter les meilleures pratiques de sécurité Docker
-- Mettre en place un pipeline CI/CD complet
-- Automatiser les tests et le déploiement
+- Documenter le processus de dockerisation
 
 ### 2.2 Objectifs Spécifiques
-- Réduire la taille de l'image Docker finale à moins de 200 MB
-- Atteindre un score de sécurité "A" sur les scans de vulnérabilités
-- Déployer automatiquement sur chaque push vers la branche principale
-- Temps de build CI/CD inférieur à 5 minutes
+- Réduire la taille de l'image Docker finale à moins de 150 MB
+- Atteindre un score de sécurité sans vulnérabilités critiques
+- Temps de démarrage du container inférieur à 10 secondes
+- Documentation complète du processus
 
 ## 3. Livrables Attendus
 
 ### 3.1 Configuration Docker
 
-#### A. Dockerfile Optimisé
-- **Multi-stage build** pour réduire la taille de l'image finale
-- Utilisation d'une image de base Alpine Linux
+#### A. Dockerfile Multi-Stage Optimisé (2h)
+
+**Caractéristiques requises :**
+- **Multi-stage build** avec au minimum 2 stages (build + production)
+- Stage 1 (Builder) : Installation des dépendances et préparation
+- Stage 2 (Production) : Image finale légère avec uniquement le nécessaire
+- Utilisation d'une image de base Alpine Linux (`node:20-alpine`)
 - Layer caching optimisé
 - Installation uniquement des dépendances de production
 - Exécution avec un utilisateur non-root
+- Health check configuré
+- Labels pour métadonnées
+
+**Structure recommandée :**
+```dockerfile
+# Stage 1: Builder
+FROM node:20-alpine AS builder
+# Installation et build
+
+# Stage 2: Production
+FROM node:20-alpine
+# Copie uniquement les fichiers nécessaires
+```
 
 **Critères d'acceptation :**
-- Image finale < 200 MB
-- Temps de build < 2 minutes
-- Pas de fichiers inutiles dans l'image finale
+- ✅ Image finale < 150 MB
+- ✅ Temps de build < 2 minutes
+- ✅ Pas de fichiers de développement dans l'image finale
+- ✅ Utilisateur non-root configuré
+- ✅ Health check fonctionnel
 
-#### B. Docker Compose
-- Configuration multi-services (app + éventuellement base de données)
+#### B. Docker Compose (1h)
+
+**Configuration requise :**
+- Service principal pour l'application
 - Variables d'environnement externalisées
-- Volumes pour la persistance des données
-- Configuration réseau isolée
+- Volumes pour les logs (optionnel)
+- Configuration réseau avec nom custom
 - Health checks configurés
+- Restart policy appropriée
+- Limites de ressources (CPU, mémoire)
+
+**Exemple de services :**
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
 
 **Critères d'acceptation :**
-- Démarrage complet en moins de 30 secondes
-- Tous les services accessible et fonctionnels
-- Redémarrage automatique en cas d'échec
+- ✅ Démarrage complet en moins de 15 secondes
+- ✅ Application accessible sur http://localhost:3000
+- ✅ Redémarrage automatique en cas d'échec
+- ✅ Variables d'environnement bien configurées
 
-#### C. .dockerignore
-- Exclusion des fichiers non nécessaires
-- Optimisation du contexte de build
-- Documentation des exclusions
+#### C. .dockerignore (15 min)
 
-### 3.2 Sécurité
+**Fichiers à exclure :**
+- node_modules/
+- npm-debug.log
+- .git/
+- .gitignore
+- README.md (optionnel)
+- docs/
+- tests/
+- .env (si existe)
+- *.md (optionnel)
 
-#### A. Sécurisation de l'Image Docker
-- [ ] Scan de vulnérabilités avec Trivy ou Snyk
-- [ ] Utilisation d'images de base officielles et maintenues
-- [ ] Pas d'exécution en tant que root
-- [ ] Suppression des packages de build
-- [ ] Secrets non codés en dur
-- [ ] Signature des images
+**Critères d'acceptation :**
+- ✅ Contexte de build optimisé
+- ✅ Réduction du temps de build
+- ✅ Pas de fichiers sensibles inclus
+
+### 3.2 Sécurité (2h)
+
+#### A. Analyse et Correction des Vulnérabilités
 
 **Outils à utiliser :**
-- Trivy pour le scan de vulnérabilités
-- Docker Scout pour l'analyse de sécurité
-- Hadolint pour le linting du Dockerfile
+
+1. **Trivy** - Scan de vulnérabilités
+   ```bash
+   # Installation
+   brew install trivy  # macOS
+   # ou
+   wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+
+   # Utilisation
+   trivy image nodejs-todo-app:latest
+   ```
+
+2. **Hadolint** - Linting du Dockerfile
+   ```bash
+   # Installation
+   brew install hadolint  # macOS
+   # ou
+   docker pull hadolint/hadolint
+
+   # Utilisation
+   hadolint Dockerfile
+   ```
+
+**Tâches de sécurité :**
+- [ ] Scanner l'image avec Trivy
+- [ ] Générer un rapport de vulnérabilités
+- [ ] Corriger les vulnérabilités critiques et hautes
+- [ ] Lint du Dockerfile avec Hadolint
+- [ ] Corriger tous les warnings du Dockerfile
+- [ ] Vérifier les permissions des fichiers
 
 **Critères d'acceptation :**
-- Zéro vulnérabilité critique
-- Maximum 5 vulnérabilités moyennes
-- Score de sécurité > 80/100
+- ✅ **Zéro vulnérabilité critique**
+- ✅ Maximum 3 vulnérabilités hautes
+- ✅ Aucune erreur Hadolint
+- ✅ Rapport de sécurité documenté
 
-#### B. Gestion des Secrets
-- Utilisation de Docker Secrets ou variables d'environnement
-- Fichier .env.example fourni
+#### B. Bonnes Pratiques de Sécurité
+
+**Checklist de sécurité obligatoire :**
+
+1. **Image de base**
+   - [ ] Utilisation d'une image officielle et maintenue
+   - [ ] Version spécifique (pas de tag `latest` en production)
+   - [ ] Image Alpine pour réduire la surface d'attaque
+
+2. **Utilisateur non-root**
+   - [ ] Création ou utilisation d'un utilisateur non-root
+   - [ ] Pas d'exécution en tant que root
+   - [ ] Permissions appropriées sur les fichiers
+
+3. **Secrets et configuration**
+   - [ ] Pas de secrets hardcodés dans le Dockerfile
+   - [ ] Utilisation de variables d'environnement
+   - [ ] Fichier .env.example fourni
+   - [ ] .env dans .gitignore et .dockerignore
+
+4. **Optimisation de sécurité**
+   - [ ] Suppression des packages de build inutiles
+   - [ ] Nettoyage des caches (npm, apt)
+   - [ ] Minimisation du nombre de layers
+   - [ ] Exposition minimale des ports
+
+5. **Labels et métadonnées**
+   - [ ] Labels pour traçabilité
+   - [ ] Version de l'application
+   - [ ] Informations de maintenance
+
+#### C. Gestion des Secrets
+
+**Pratiques à implémenter :**
+- Variables d'environnement via docker-compose
+- Fichier .env.example avec des valeurs par défaut
 - Documentation de toutes les variables requises
-- Pas de credentials dans le code ou les images
+- Avertissement sur les secrets dans la documentation
 
-#### C. Politique de Sécurité
-- Principe du moindre privilège
-- Réseau isolé entre les containers
-- Exposition minimale des ports
-- Mise à jour régulière des dépendances
+**Exemple de configuration :**
+```env
+NODE_ENV=production
+PORT=3000
+# Ajouter d'autres variables selon les besoins
+```
 
-### 3.3 CI/CD Pipeline
+### 3.3 Optimisation de l'Image (1h30)
 
-#### A. Intégration Continue (CI)
+#### A. Techniques d'Optimisation
 
-**GitHub Actions Workflows à créer :**
+**1. Multi-Stage Build**
+- Séparation claire entre build et production
+- Copie sélective des artifacts
+- Réduction de la taille finale
 
-1. **Workflow de Build et Test**
-   ```
-   Déclencheurs : Push, Pull Request
-   Jobs :
-   - Linting du code (ESLint)
-   - Linting du Dockerfile (Hadolint)
-   - Build de l'image Docker
-   - Tests unitaires (si applicable)
-   - Scan de sécurité (Trivy)
-   - Analyse de qualité du code
-   ```
+**2. Layer Caching**
+- Ordre optimal des instructions
+- COPY package*.json avant npm install
+- Instructions peu changeantes en premier
 
-2. **Workflow de Sécurité**
-   ```
-   Déclencheurs : Schedule (quotidien), Push
-   Jobs :
-   - Scan de vulnérabilités des dépendances npm
-   - Scan de l'image Docker
-   - Vérification des secrets exposés
-   - Rapport de conformité
-   ```
+**3. Optimisation des dépendances**
+- `npm ci` au lieu de `npm install`
+- `--production` pour dépendances de production uniquement
+- `--only=production` pour npm install
+- Suppression du cache npm
 
-**Critères d'acceptation :**
-- Pipeline s'exécute en moins de 5 minutes
-- Échec automatique si vulnérabilité critique détectée
-- Notifications en cas d'échec
-- Badges de statut dans le README
+**4. Nettoyage**
+- Suppression des fichiers temporaires
+- Nettoyage des caches apt (si utilisé)
+- Suppression des packages de build
 
-#### B. Déploiement Continu (CD)
+**Exemple d'optimisations :**
+```dockerfile
+# Mauvais
+RUN npm install
+RUN npm cache clean --force
 
-**Workflow de Déploiement :**
+# Bon
+RUN npm ci --only=production && \
+    npm cache clean --force
+```
 
-1. **Déploiement sur Docker Hub / GitHub Container Registry**
-   ```
-   Déclencheurs : Push sur main, Tag de version
-   Jobs :
-   - Build de l'image de production
-   - Tag avec version sémantique
-   - Push vers le registre
-   - Création de release notes
-   ```
+#### B. Métriques d'Optimisation
 
-2. **Déploiement sur Environnement (optionnel)**
-   ```
-   Options :
-   - Heroku Container Registry
-   - AWS ECS / ECR
-   - Google Cloud Run
-   - Azure Container Instances
-   - Serveur VPS avec Docker Compose
-   ```
+**Objectifs à atteindre :**
 
-**Critères d'acceptation :**
-- Déploiement automatique après merge sur main
-- Rollback possible en cas d'échec
-- Versioning sémantique (SemVer)
-- Zero-downtime deployment
-- Logs de déploiement accessibles
+| Métrique | Objectif | Mesure |
+|----------|----------|--------|
+| Taille de l'image | < 150 MB | `docker images` |
+| Nombre de layers | < 15 | `docker history` |
+| Temps de build | < 2 min | `time docker build` |
+| Temps de démarrage | < 10 sec | `time docker run` |
+| Utilisation mémoire | < 256 MB | `docker stats` |
 
-#### C. Stratégies de Déploiement
-- Blue-Green deployment (recommandé)
-- Rolling updates
-- Health checks avant mise en production
-- Smoke tests post-déploiement
+**Commandes de vérification :**
+```bash
+# Taille de l'image
+docker images nodejs-todo-app
 
-### 3.4 Documentation
+# Analyse des layers
+docker history nodejs-todo-app:latest
+
+# Inspection détaillée
+docker inspect nodejs-todo-app:latest
+
+# Stats en temps réel
+docker stats
+```
+
+### 3.4 Documentation (1h30)
 
 #### A. Documentation Technique
-- [ ] README.md mis à jour avec instructions Docker
-- [ ] Guide de démarrage rapide avec Docker
-- [ ] Documentation de l'architecture
-- [ ] Diagramme d'infrastructure
-- [ ] Guide de dépannage (troubleshooting)
 
-#### B. Documentation CI/CD
-- [ ] Explication des workflows
-- [ ] Variables d'environnement requises
-- [ ] Secrets GitHub à configurer
-- [ ] Processus de release
-- [ ] Rollback procedure
+**Fichiers à créer/mettre à jour :**
 
-#### C. Documentation Sécurité
-- [ ] Checklist de sécurité
-- [ ] Politique de gestion des vulnérabilités
-- [ ] Procédure de mise à jour des dépendances
-- [ ] Matrice de conformité
+1. **README.md** (mise à jour)
+   - [ ] Section "Démarrage avec Docker"
+   - [ ] Prérequis (Docker, Docker Compose)
+   - [ ] Commandes de build et run
+   - [ ] Guide de dépannage
+   - [ ] Variables d'environnement
+
+2. **docs/DOCKER.md** (nouveau)
+   - [ ] Architecture Docker détaillée
+   - [ ] Explications du Dockerfile
+   - [ ] Choix techniques et justifications
+   - [ ] Optimisations appliquées
+
+3. **docs/SECURITY.md** (nouveau)
+   - [ ] Checklist de sécurité
+   - [ ] Rapport de scan Trivy
+   - [ ] Vulnérabilités identifiées et corrigées
+   - [ ] Bonnes pratiques implémentées
+
+#### B. Guide d'Utilisation Docker
+
+**Contenu minimum requis :**
+
+```markdown
+## Démarrage Rapide avec Docker
+
+### Prérequis
+- Docker 20.10+
+- Docker Compose 2.0+
+
+### Installation et Démarrage
+
+1. Build de l'image :
+   \`\`\`bash
+   docker build -t nodejs-todo-app .
+   \`\`\`
+
+2. Lancement avec Docker :
+   \`\`\`bash
+   docker run -d -p 3000:3000 --name todo-app nodejs-todo-app
+   \`\`\`
+
+3. Lancement avec Docker Compose :
+   \`\`\`bash
+   docker-compose up -d
+   \`\`\`
+
+### Commandes Utiles
+- Logs : \`docker logs todo-app\`
+- Arrêt : \`docker stop todo-app\`
+- Suppression : \`docker rm todo-app\`
+```
+
+#### C. Documentation des Optimisations
+
+**Tableau comparatif à fournir :**
+
+| Aspect | Avant | Après | Amélioration |
+|--------|-------|-------|--------------|
+| Taille image | ~XXX MB | ~XXX MB | -XX% |
+| Temps build | X min | X min | -XX% |
+| Vulnérabilités | X critical | 0 critical | 100% |
+| Layers | XX | XX | -XX% |
 
 ## 4. Spécifications Techniques
 
 ### 4.1 Stack Technologique
-- **Containerisation** : Docker 24+, Docker Compose 2.20+
-- **CI/CD** : GitHub Actions
-- **Registre d'images** : Docker Hub / GitHub Container Registry
-- **Sécurité** : Trivy, Hadolint, Snyk (optionnel)
-- **Monitoring** : Health checks Docker
-- **Orchestration** : Docker Compose (dev) / Kubernetes (production optionnel)
+- **Containerisation** : Docker 20.10+, Docker Compose 2.0+
+- **Image de base** : node:20-alpine
+- **Outils de sécurité** : Trivy, Hadolint
+- **Documentation** : Markdown
 
 ### 4.2 Structure des Fichiers à Créer
 
 ```
 project-root/
-├── Dockerfile                      # Dockerfile optimisé multi-stage
-├── Dockerfile.dev                  # Dockerfile pour développement
-├── docker-compose.yml              # Configuration multi-services
-├── docker-compose.prod.yml         # Override pour production
-├── .dockerignore                   # Exclusions Docker
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                  # Pipeline CI
-│       ├── security.yml            # Scan de sécurité
-│       └── cd.yml                  # Pipeline CD
-├── scripts/
-│   ├── build.sh                    # Script de build
-│   ├── deploy.sh                   # Script de déploiement
-│   └── health-check.sh             # Health check script
-├── .env.example                    # Exemple de variables d'env
+├── Dockerfile                      # Dockerfile multi-stage optimisé ⭐
+├── docker-compose.yml              # Configuration Docker Compose ⭐
+├── .dockerignore                   # Exclusions Docker ⭐
+├── .env.example                    # ✅ Déjà créé
 ├── docs/
-│   ├── ARCHITECTURE.md             # Architecture Docker
-│   ├── DEPLOYMENT.md               # Guide de déploiement
-│   └── SECURITY.md                 # Documentation sécurité
-└── PROJET_DOCKERISATION.md         # Ce document
+│   ├── DOCKER.md                   # Documentation Docker ⭐
+│   └── SECURITY.md                 # Documentation sécurité ⭐
+├── scripts/
+│   ├── build.sh                    # Script de build (optionnel)
+│   └── scan.sh                     # Script de scan sécurité (optionnel)
+├── README.md                       # Mise à jour avec section Docker ⭐
+├── PROJET_DOCKERISATION.md         # ✅ Ce document
+└── DOCKERIZATION_CHECKLIST.md      # ✅ Checklist de suivi
+
+⭐ = À créer/modifier
 ```
 
 ### 4.3 Variables d'Environnement
 
+**Variables requises :**
 ```env
 # Application
 NODE_ENV=production
 PORT=3000
 APP_NAME=nodejs-todo-app
 
-# Docker
+# Docker (optionnel)
 DOCKER_IMAGE_NAME=nodejs-todo-app
 DOCKER_IMAGE_TAG=latest
-DOCKER_REGISTRY=ghcr.io/username
-
-# CI/CD
-CI_REGISTRY_USER=${GITHUB_ACTOR}
-CI_REGISTRY_PASSWORD=${GITHUB_TOKEN}
 ```
 
-## 5. Bonnes Pratiques à Implémenter
+## 5. Planning de Réalisation (7 heures)
 
-### 5.1 Optimisation d'Image
-- ✅ Multi-stage build (builder + production)
-- ✅ Image de base Alpine Linux (node:20-alpine)
-- ✅ Installation groupée des dépendances
-- ✅ Copie sélective des fichiers
-- ✅ Suppression des caches npm
-- ✅ Compression des layers
-- ✅ Utilisation du cache Docker
+### Phase 1 : Dockerisation de Base (2h30)
+**Horaire : H0 → H2h30**
 
-### 5.2 Sécurité Docker
-- ✅ Utilisateur non-root (USER node)
-- ✅ Pas de secrets dans le Dockerfile
-- ✅ Scan régulier des vulnérabilités
-- ✅ Mise à jour des dépendances
-- ✅ Principe du moindre privilège
-- ✅ Read-only filesystem où possible
-- ✅ Limitation des capabilities Linux
-- ✅ Réseau isolé
+**Tâches :**
+- Création du Dockerfile multi-stage (1h30)
+  - Stage builder avec installation des dépendances
+  - Stage production avec image optimisée
+  - Configuration utilisateur non-root
+  - Health check
+- Configuration Docker Compose (45 min)
+  - Service application
+  - Variables d'environnement
+  - Health checks et restart policy
+- Création du .dockerignore (15 min)
+- Tests de base (30 min)
+  - Build de l'image
+  - Lancement du container
+  - Vérification fonctionnelle
 
-### 5.3 CI/CD
-- ✅ Tests automatisés à chaque commit
-- ✅ Build parallélisés
-- ✅ Cache des dépendances
-- ✅ Déploiement automatique sur main
-- ✅ Versioning sémantique
-- ✅ Notifications (Slack, Discord, Email)
-- ✅ Artifacts et logs conservés
-- ✅ Rollback automatique en cas d'échec
+**Livrable :** Application fonctionnelle dans Docker
 
-## 6. Phases du Projet
+### Phase 2 : Optimisation (1h30)
+**Horaire : H2h30 → H4h**
 
-### Phase 1 : Containerisation (Semaine 1)
-- Création du Dockerfile optimisé
-- Configuration Docker Compose
-- Tests locaux de l'image
-- Documentation de base
+**Tâches :**
+- Optimisation du Dockerfile (45 min)
+  - Layer caching
+  - npm ci au lieu de npm install
+  - Nettoyage des caches
+  - Optimisation de l'ordre des instructions
+- Mesure des métriques (15 min)
+  - Taille de l'image
+  - Nombre de layers
+  - Temps de build
+- Itération d'optimisation (30 min)
+  - Ajustements basés sur les métriques
+  - Tests de performance
 
-**Livrable** : Application fonctionnelle dans Docker
+**Livrable :** Image Docker optimisée < 150 MB
 
-### Phase 2 : Sécurité (Semaine 2)
-- Implémentation des scans de sécurité
-- Correction des vulnérabilités
-- Mise en place des bonnes pratiques
-- Documentation sécurité
+### Phase 3 : Sécurité (2h)
+**Horaire : H4h → H6h**
 
-**Livrable** : Image sécurisée avec rapport de scan
+**Tâches :**
+- Installation des outils (15 min)
+  - Trivy pour scan de vulnérabilités
+  - Hadolint pour lint du Dockerfile
+- Scan de sécurité (30 min)
+  - Scan Trivy de l'image
+  - Analyse du rapport
+  - Lint avec Hadolint
+- Corrections de sécurité (45 min)
+  - Correction des vulnérabilités critiques
+  - Correction des warnings Hadolint
+  - Application des bonnes pratiques
+- Re-scan et validation (30 min)
+  - Nouveau scan après corrections
+  - Génération du rapport final
+  - Documentation des vulnérabilités résiduelles
 
-### Phase 3 : CI (Semaine 3)
-- Configuration GitHub Actions
-- Pipeline de build et test
-- Pipeline de sécurité
-- Intégration des badges
+**Livrable :** Image sécurisée avec 0 vulnérabilité critique
 
-**Livrable** : Pipeline CI fonctionnel
+### Phase 4 : Documentation et Validation (1h)
+**Horaire : H6h → H7h**
 
-### Phase 4 : CD (Semaine 4)
-- Configuration du registre d'images
-- Pipeline de déploiement
-- Stratégie de release
-- Automatisation complète
+**Tâches :**
+- Mise à jour README.md (20 min)
+  - Section Docker
+  - Guide de démarrage
+  - Commandes utiles
+- Création docs/DOCKER.md (20 min)
+  - Architecture
+  - Explications techniques
+- Création docs/SECURITY.md (15 min)
+  - Rapport de sécurité
+  - Checklist appliquée
+- Tests finaux et validation (5 min)
+  - Build propre
+  - Lancement fonctionnel
+  - Vérification de la documentation
 
-**Livrable** : Pipeline CD complet
+**Livrable :** Projet complet et documenté
 
-### Phase 5 : Documentation et Optimisation (Semaine 5)
-- Documentation complète
-- Optimisation des performances
-- Tests de charge
-- Formation de l'équipe
+## 6. Critères de Succès
 
-**Livrable** : Projet documenté et optimisé
+### 6.1 Critères Techniques (Obligatoires)
 
-## 7. Critères de Succès
+- [ ] **Image Docker fonctionnelle**
+  - Build sans erreur
+  - Application accessible sur port 3000
+  - Toutes les fonctionnalités opérationnelles
 
-### 7.1 Critères Techniques
-- [ ] Image Docker < 200 MB
-- [ ] Temps de démarrage < 10 secondes
-- [ ] Zero vulnérabilité critique
-- [ ] Pipeline CI/CD < 5 minutes
-- [ ] Taux de réussite des déploiements > 95%
-- [ ] Code coverage > 70% (si tests implémentés)
+- [ ] **Optimisation**
+  - Taille de l'image < 150 MB
+  - Multi-stage build implémenté
+  - Layer caching optimisé
+  - Temps de démarrage < 10 secondes
 
-### 7.2 Critères Qualité
-- [ ] Documentation complète et à jour
-- [ ] Code respectant les standards (linting)
-- [ ] Pas de secrets exposés
-- [ ] Logs structurés et accessibles
-- [ ] Monitoring et health checks actifs
+- [ ] **Sécurité**
+  - 0 vulnérabilité critique
+  - Maximum 3 vulnérabilités hautes
+  - Utilisateur non-root configuré
+  - Pas de secrets exposés
+  - Hadolint sans erreur
 
-### 7.3 Critères Opérationnels
-- [ ] Déploiement automatique fonctionnel
-- [ ] Rollback testé et documenté
-- [ ] Backup et restore possibles
-- [ ] Scalabilité horizontale possible
-- [ ] Temps de récupération < 5 minutes
+- [ ] **Docker Compose**
+  - Configuration fonctionnelle
+  - Health checks actifs
+  - Variables d'environnement externalisées
 
-## 8. Risques et Mitigation
+- [ ] **Documentation**
+  - README.md mis à jour
+  - docs/DOCKER.md créé
+  - docs/SECURITY.md créé
+  - Commandes documentées
 
-| Risque | Impact | Probabilité | Mitigation |
-|--------|--------|-------------|------------|
-| Vulnérabilités de sécurité | Élevé | Moyen | Scans automatiques, mises à jour régulières |
-| Échec de déploiement | Moyen | Faible | Tests automatisés, rollback automatique |
-| Performance dégradée | Moyen | Faible | Tests de charge, monitoring continu |
-| Coûts d'infrastructure | Faible | Moyen | Optimisation des ressources, auto-scaling |
-| Complexité excessive | Moyen | Moyen | Documentation claire, formation équipe |
+### 6.2 Critères Qualité (Recommandés)
 
-## 9. Métriques de Performance
+- [ ] Code Dockerfile propre et commenté
+- [ ] Labels de métadonnées présents
+- [ ] Scripts d'aide créés (build.sh, scan.sh)
+- [ ] Rapport comparatif avant/après optimisation
+- [ ] Health check pertinent et fonctionnel
 
-### 9.1 Métriques Docker
-- Taille de l'image (objectif : < 200 MB)
-- Temps de build (objectif : < 2 min)
-- Temps de démarrage (objectif : < 10 sec)
-- Utilisation mémoire (objectif : < 256 MB)
-- Utilisation CPU (objectif : < 50% en charge normale)
+## 7. Grille d'Évaluation (100 points)
 
-### 9.2 Métriques CI/CD
-- Temps total du pipeline (objectif : < 5 min)
-- Taux de succès des builds (objectif : > 95%)
-- Fréquence de déploiement (objectif : plusieurs/jour)
-- Temps moyen de résolution (MTTR) (objectif : < 1h)
-- Lead time (commit → production) (objectif : < 15 min)
+### Dockerisation (30 points)
+- Dockerfile multi-stage fonctionnel (15 pts)
+- Docker Compose configuré correctement (10 pts)
+- .dockerignore approprié (5 pts)
 
-### 9.3 Métriques Sécurité
-- Nombre de vulnérabilités par sévérité
-- Temps de correction des vulnérabilités critiques (objectif : < 24h)
-- Score de sécurité global (objectif : > 80/100)
-- Conformité aux standards (OWASP, CIS)
+### Optimisation (25 points)
+- Taille de l'image < 150 MB (10 pts)
+- Layer caching optimisé (5 pts)
+- Bonnes pratiques d'optimisation (5 pts)
+- Métriques documentées (5 pts)
 
-## 10. Ressources et Outils
+### Sécurité (30 points)
+- Scan Trivy : 0 vulnérabilité critique (15 pts)
+- Hadolint : pas d'erreur (5 pts)
+- Utilisateur non-root (5 pts)
+- Gestion des secrets (5 pts)
 
-### 10.1 Outils Requis
-- Docker Desktop / Docker Engine
-- Git et GitHub
-- Node.js (pour développement local)
-- Visual Studio Code (recommandé)
-- Postman / curl (pour tests API)
+### Documentation (15 points)
+- README.md mis à jour (5 pts)
+- docs/DOCKER.md complet (5 pts)
+- docs/SECURITY.md avec rapport (5 pts)
 
-### 10.2 Services Cloud (optionnels)
-- Docker Hub (gratuit)
-- GitHub Container Registry (inclus)
-- Heroku (gratuit pour petits projets)
-- DigitalOcean / AWS / GCP (payant)
+### Bonus (max 10 points)
+- Scripts d'automatisation (+3 pts)
+- Optimisation avancée (< 100 MB) (+3 pts)
+- Tests automatisés (+2 pts)
+- Documentation exemplaire (+2 pts)
 
-### 10.3 Extensions et Plugins
-- Docker Extension pour VS Code
-- GitHub Actions Extension
-- ESLint
-- Hadolint
+## 8. Ressources et Outils
+
+### 8.1 Documentation Officielle
+- [Docker Documentation](https://docs.docker.com/)
+- [Dockerfile Best Practices](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
+- [Node.js Docker Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md)
+- [Docker Security](https://docs.docker.com/engine/security/)
+
+### 8.2 Outils Requis
+- Docker Desktop / Docker Engine (20.10+)
+- Docker Compose (2.0+)
+- Trivy (scanner de vulnérabilités)
+- Hadolint (linter Dockerfile)
+
+### 8.3 Installation des Outils
+
+**macOS :**
+```bash
+# Docker Desktop (inclut Docker et Docker Compose)
+# Télécharger depuis https://www.docker.com/products/docker-desktop
+
+# Trivy
+brew install trivy
+
+# Hadolint
+brew install hadolint
+```
+
+**Linux (Ubuntu/Debian) :**
+```bash
+# Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Docker Compose
+sudo apt-get install docker-compose-plugin
+
+# Trivy
+wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+sudo apt-get update
+sudo apt-get install trivy
+
+# Hadolint
+sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+sudo chmod +x /usr/local/bin/hadolint
+```
+
+## 9. Commandes Utiles
+
+### Build et Run
+```bash
+# Build de l'image
+docker build -t nodejs-todo-app:latest .
+
+# Run simple
+docker run -d -p 3000:3000 --name todo nodejs-todo-app:latest
+
+# Run avec variables d'environnement
+docker run -d -p 3000:3000 -e NODE_ENV=production --name todo nodejs-todo-app:latest
+
+# Docker Compose
+docker-compose up -d
+docker-compose down
+docker-compose logs -f
+```
+
+### Inspection et Debug
+```bash
+# Voir les images
+docker images
+
+# Historique des layers
+docker history nodejs-todo-app:latest
+
+# Inspection détaillée
+docker inspect nodejs-todo-app:latest
+
+# Logs du container
+docker logs todo
+
+# Shell dans le container
+docker exec -it todo sh
+
+# Stats en temps réel
+docker stats todo
+```
+
+### Nettoyage
+```bash
+# Arrêt et suppression du container
+docker stop todo && docker rm todo
+
+# Suppression de l'image
+docker rmi nodejs-todo-app:latest
+
+# Nettoyage complet
+docker system prune -a
+```
+
+### Sécurité
+```bash
+# Scan Trivy
+trivy image nodejs-todo-app:latest
+
+# Scan avec sortie JSON
+trivy image -f json -o report.json nodejs-todo-app:latest
+
+# Lint Dockerfile
+hadolint Dockerfile
+
+# Scan des secrets (avec gitleaks si installé)
+gitleaks detect --source . -v
+```
+
+## 10. Conseils et Astuces
+
+### 10.1 Pour l'Optimisation
+- Commencez par un Dockerfile simple, optimisez ensuite
+- Mesurez avant et après chaque optimisation
+- Utilisez `docker build --no-cache` pour tester sans cache
+- Comparez avec `docker images` après chaque build
+
+### 10.2 Pour la Sécurité
+- Scannez régulièrement pendant le développement
+- Ne négligez pas les vulnérabilités moyennes
+- Lisez attentivement les rapports Trivy
+- Documentez les vulnérabilités non corrigées avec justification
+
+### 10.3 Pour Gagner du Temps
+- Utilisez le cache Docker intelligemment
+- Testez fréquemment (ne pas attendre la fin)
+- Gardez une version de travail avant d'optimiser
+- Automatisez avec des scripts bash
 
 ## 11. Livrables Finaux
 
-### 11.1 Code et Configuration
-- ✅ Dockerfile multi-stage optimisé
-- ✅ Docker Compose avec services configurés
-- ✅ Workflows GitHub Actions (CI/CD)
-- ✅ Scripts d'automatisation
-- ✅ Configuration de sécurité
+À la fin du projet, vous devez avoir :
 
-### 11.2 Documentation
-- ✅ README.md complet avec badges
-- ✅ Guide d'installation et déploiement
-- ✅ Documentation d'architecture
-- ✅ Guide de contribution
-- ✅ Checklist de sécurité
+- ✅ **Dockerfile** multi-stage optimisé et fonctionnel
+- ✅ **docker-compose.yml** configuré correctement
+- ✅ **.dockerignore** avec exclusions appropriées
+- ✅ **docs/DOCKER.md** avec documentation technique
+- ✅ **docs/SECURITY.md** avec rapport de sécurité
+- ✅ **README.md** mis à jour avec section Docker
+- ✅ Image Docker < 150 MB avec 0 vulnérabilité critique
+- ✅ Application fonctionnelle et testée
+- ✅ Rapport de métriques (avant/après)
 
-### 11.3 Tests et Validation
-- ✅ Tests de l'image Docker
-- ✅ Rapports de scan de sécurité
-- ✅ Logs des déploiements réussis
-- ✅ Preuves de conformité
+## 12. Critères de Validation Finale
 
-## 12. Modalités d'Évaluation
+Avant de considérer le projet terminé, vérifiez :
 
-### 12.1 Critères d'Évaluation (100 points)
-
-**Dockerisation (25 points)**
-- Dockerfile optimisé et fonctionnel (10 pts)
-- Multi-stage build implémenté (5 pts)
-- Docker Compose configuré (5 pts)
-- Documentation Docker (5 pts)
-
-**Sécurité (25 points)**
-- Scan de vulnérabilités en place (10 pts)
-- Bonnes pratiques de sécurité (10 pts)
-- Gestion des secrets (5 pts)
-
-**CI/CD (30 points)**
-- Pipeline CI fonctionnel (10 pts)
-- Pipeline CD fonctionnel (10 pts)
-- Tests automatisés (5 pts)
-- Déploiement automatique (5 pts)
-
-**Documentation et Qualité (20 points)**
-- Documentation complète (10 pts)
-- Code propre et commenté (5 pts)
-- Respect des bonnes pratiques (5 pts)
-
-### 12.2 Bonus (10 points supplémentaires)
-- Monitoring et alerting (+3 pts)
-- Tests de charge / performance (+2 pts)
-- Déploiement multi-environnements (+3 pts)
-- Dashboard de métriques (+2 pts)
-
-## 13. Calendrier Proposé
-
-| Semaine | Tâches | Livrables |
-|---------|--------|-----------|
-| 1 | Dockerisation de base | Dockerfile + Docker Compose |
-| 2 | Sécurité et optimisation | Image sécurisée + rapport |
-| 3 | Pipeline CI | GitHub Actions CI |
-| 4 | Pipeline CD | Déploiement automatique |
-| 5 | Documentation et tests | Projet complet |
-
-## 14. Ressources Supplémentaires
-
-### 14.1 Documentation Officielle
-- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Node.js Docker Best Practices](https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md)
-- [OWASP Docker Security](https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html)
-
-### 14.2 Tutoriels Recommandés
-- Docker Multi-Stage Builds
-- GitHub Actions for Docker
-- Container Security Scanning
-- CI/CD Pipeline Design
-
-### 14.3 Outils de Validation
-- Trivy (scan de vulnérabilités)
-- Hadolint (linting Dockerfile)
-- Docker Bench Security
-- Snyk (analyse de sécurité)
-
-## 15. Contact et Support
-
-Pour toute question concernant ce projet :
-- Créer une issue dans le repository
-- Consulter la documentation
-- Contacter l'équipe DevOps
+- [ ] `docker build -t nodejs-todo-app .` → Succès
+- [ ] `docker run -d -p 3000:3000 nodejs-todo-app` → Succès
+- [ ] `curl http://localhost:3000` → Réponse 200 OK
+- [ ] `docker images nodejs-todo-app` → Taille < 150 MB
+- [ ] `trivy image nodejs-todo-app` → 0 critique
+- [ ] `hadolint Dockerfile` → Pas d'erreur
+- [ ] `docker-compose up` → Démarrage sans erreur
+- [ ] Documentation complète et lisible
+- [ ] Tous les fichiers committés et pushés
 
 ---
 
 **Date de création** : 2025-12-18
-**Version** : 1.0
-**Auteur** : Projet de Dockerisation Todo App
-**Statut** : En attente de démarrage
+**Version** : 2.0 (Simplifiée - 7 heures)
+**Focus** : Dockerisation, Optimisation, Sécurité
+**Statut** : ⏳ Prêt à démarrer

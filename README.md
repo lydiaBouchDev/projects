@@ -117,27 +117,25 @@ DELETE /api/todos/completed/all
 
 ## 🐳 Projet de Dockerisation
 
-Un projet complet de containerisation est en cours pour cette application. Consultez les documents suivants :
+Un projet de containerisation optimisée est en cours pour cette application (durée : 7 heures). Consultez les documents suivants :
 
-- **[PROJET_DOCKERISATION.md](./PROJET_DOCKERISATION.md)** - Énoncé complet du projet de dockerisation
-- **[DOCKERIZATION_CHECKLIST.md](./DOCKERIZATION_CHECKLIST.md)** - Checklist de suivi du projet
+- **[PROJET_DOCKERISATION.md](./PROJET_DOCKERISATION.md)** - Énoncé complet du projet (objectifs, livrables, grille d'évaluation)
+- **[DOCKERIZATION_CHECKLIST.md](./DOCKERIZATION_CHECKLIST.md)** - Checklist détaillée avec commandes de référence
 
-### Objectifs du Projet Docker
+### Objectifs du Projet
 
-- ✅ Containerisation avec Docker multi-stage
-- ✅ Optimisation de l'image (< 200 MB)
-- ✅ Sécurité renforcée (scans, bonnes pratiques)
-- ✅ Pipeline CI/CD complet avec GitHub Actions
-- ✅ Déploiement automatisé
-- ✅ Monitoring et health checks
+- 🐳 Containerisation avec Docker multi-stage
+- ⚡ Optimisation de l'image (< 150 MB)
+- 🔒 Sécurité renforcée (Trivy, Hadolint)
+- 📚 Documentation complète (architecture, sécurité)
+- ✅ Tests et validation
 
-### Phases Prévues
+### Planning (7 heures)
 
-1. **Phase 1** : Dockerisation de base (Dockerfile + Docker Compose)
-2. **Phase 2** : Sécurité et optimisation
-3. **Phase 3** : Intégration Continue (CI)
-4. **Phase 4** : Déploiement Continu (CD)
-5. **Phase 5** : Documentation et optimisation
+1. **Phase 1** (2h30) : Dockerisation de base - Dockerfile multi-stage + Docker Compose
+2. **Phase 2** (1h30) : Optimisation - Réduction taille, layer caching
+3. **Phase 3** (2h) : Sécurité - Scans Trivy/Hadolint, corrections
+4. **Phase 4** (1h) : Documentation - README, docs/DOCKER.md, docs/SECURITY.md
 
 ## Future Enhancements
 
