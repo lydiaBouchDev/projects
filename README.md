@@ -115,6 +115,30 @@ DELETE /api/todos/completed/all
 - Error handling
 - Input validation
 
+## 🐳 Projet de Dockerisation
+
+Un projet complet de containerisation est en cours pour cette application. Consultez les documents suivants :
+
+- **[PROJET_DOCKERISATION.md](./PROJET_DOCKERISATION.md)** - Énoncé complet du projet de dockerisation
+- **[DOCKERIZATION_CHECKLIST.md](./DOCKERIZATION_CHECKLIST.md)** - Checklist de suivi du projet
+
+### Objectifs du Projet Docker
+
+- ✅ Containerisation avec Docker multi-stage
+- ✅ Optimisation de l'image (< 200 MB)
+- ✅ Sécurité renforcée (scans, bonnes pratiques)
+- ✅ Pipeline CI/CD complet avec GitHub Actions
+- ✅ Déploiement automatisé
+- ✅ Monitoring et health checks
+
+### Phases Prévues
+
+1. **Phase 1** : Dockerisation de base (Dockerfile + Docker Compose)
+2. **Phase 2** : Sécurité et optimisation
+3. **Phase 3** : Intégration Continue (CI)
+4. **Phase 4** : Déploiement Continu (CD)
+5. **Phase 5** : Documentation et optimisation
+
 ## Future Enhancements
 
 - [ ] Database integration (MongoDB, PostgreSQL)
