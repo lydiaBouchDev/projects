@@ -30,7 +30,11 @@
 - [ ] Définir le service `app`
 - [ ] Configurer build context
 - [ ] Mapper le port 3000:3000
-- [ ] Ajouter variables d'environnement
+- [ ] Ajouter variables d'environnement (NODE_ENV, DATA_FILE)
+- [ ] **Configurer volume pour la persistance des données**
+  - [ ] Définir volume `todo-data`
+  - [ ] Monter le volume sur `/app/data`
+  - [ ] Variable DATA_FILE=/app/data/todos.json
 - [ ] Configurer health check
 - [ ] Ajouter restart policy (unless-stopped)
 - [ ] Configurer limites de ressources (optionnel)
@@ -53,9 +57,13 @@
 - [ ] Vérifier les logs : `docker logs todo`
 - [ ] Tester docker-compose : `docker-compose up`
 - [ ] Vérifier le health check : `docker ps` (voir statut healthy)
-- [ ] Arrêter et nettoyer : `docker stop todo && docker rm todo`
+- [ ] **Tester la persistance des données**
+  - [ ] Ajouter un todo via l'interface
+  - [ ] Redémarrer : `docker-compose restart`
+  - [ ] Vérifier que le todo est toujours présent
+- [ ] Arrêter et nettoyer : `docker-compose down`
 
-**✅ Livrable Phase 1 :** Application fonctionnelle dans Docker
+**✅ Livrable Phase 1 :** Application fonctionnelle dans Docker avec persistance
 
 ---
 

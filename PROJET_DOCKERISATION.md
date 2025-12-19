@@ -61,7 +61,7 @@ FROM node:20-alpine
 **Configuration requise :**
 - Service principal pour l'application
 - Variables d'environnement externalisées
-- Volumes pour les logs (optionnel)
+- **Volume pour la persistance des données** (fichier JSON)
 - Configuration réseau avec nom custom
 - Health checks configurés
 - Restart policy appropriée
@@ -76,11 +76,18 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATA_FILE=/app/data/todos.json
+    volumes:
+      - todo-data:/app/data
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
+    restart: unless-stopped
+
+volumes:
+  todo-data:
 ```
 
 **Critères d'acceptation :**
@@ -88,6 +95,7 @@ services:
 - ✅ Application accessible sur http://localhost:3000
 - ✅ Redémarrage automatique en cas d'échec
 - ✅ Variables d'environnement bien configurées
+- ✅ **Persistance des données entre redémarrages**
 
 #### C. .dockerignore (15 min)
 

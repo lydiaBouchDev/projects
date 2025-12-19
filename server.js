@@ -1,38 +1,77 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data', 'todos.json');
 
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// In-memory storage for todos
-let todos = [
-  {
-    id: 1,
-    text: 'Welcome to your Todo App!',
-    completed: false,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    text: 'Click the checkbox to mark as complete',
-    completed: false,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 3,
-    text: 'Click the trash icon to delete a todo',
-    completed: false,
-    createdAt: new Date().toISOString()
+// Data persistence functions
+function ensureDataDirectory() {
+  const dataDir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
   }
-];
+}
 
-let nextId = 4;
+function loadTodos() {
+  try {
+    ensureDataDirectory();
+    if (fs.existsSync(DATA_FILE)) {
+      const data = fs.readFileSync(DATA_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      return parsed;
+    }
+  } catch (error) {
+    console.error('Error loading todos:', error.message);
+  }
+
+  // Return default todos if file doesn't exist or error occurred
+  return {
+    todos: [
+      {
+        id: 1,
+        text: 'Welcome to your Todo App!',
+        completed: false,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 2,
+        text: 'Click the checkbox to mark as complete',
+        completed: false,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        text: 'Click the trash icon to delete a todo',
+        completed: false,
+        createdAt: new Date().toISOString()
+      }
+    ],
+    nextId: 4
+  };
+}
+
+function saveTodos() {
+  try {
+    ensureDataDirectory();
+    const data = JSON.stringify({ todos, nextId }, null, 2);
+    fs.writeFileSync(DATA_FILE, data, 'utf8');
+  } catch (error) {
+    console.error('Error saving todos:', error.message);
+  }
+}
+
+// Load todos from file on startup
+const loadedData = loadTodos();
+let todos = loadedData.todos;
+let nextId = loadedData.nextId;
 
 // Routes
 
@@ -69,6 +108,7 @@ app.post('/api/todos', (req, res) => {
   };
 
   todos.push(newTodo);
+  saveTodos();
   res.status(201).json(newTodo);
 });
 
@@ -93,6 +133,7 @@ app.put('/api/todos/:id', (req, res) => {
 
   todos[todoIndex].updatedAt = new Date().toISOString();
 
+  saveTodos();
   res.json(todos[todoIndex]);
 });
 
@@ -106,6 +147,7 @@ app.delete('/api/todos/:id', (req, res) => {
   }
 
   const deletedTodo = todos.splice(todoIndex, 1)[0];
+  saveTodos();
   res.json(deletedTodo);
 });
 
@@ -113,6 +155,7 @@ app.delete('/api/todos/:id', (req, res) => {
 app.delete('/api/todos/completed/all', (req, res) => {
   const completedTodos = todos.filter(t => t.completed);
   todos = todos.filter(t => !t.completed);
+  saveTodos();
   res.json({ deleted: completedTodos.length, todos: completedTodos });
 });
 

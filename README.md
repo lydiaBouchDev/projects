@@ -97,7 +97,25 @@ DELETE /api/todos/completed/all
 
 - **Backend**: Node.js, Express
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Data Storage**: In-memory (array-based)
+- **Data Storage**: JSON file-based persistence
+
+## Data Persistence
+
+The application now includes automatic data persistence:
+
+- **Storage**: Todos are saved to a JSON file (`data/todos.json`)
+- **Automatic saving**: Data is saved after every create, update, or delete operation
+- **Recovery**: Data is automatically loaded on server restart
+- **Docker volumes**: When using Docker, data persists across container restarts
+
+### Configuration
+
+Set the data file location using the `DATA_FILE` environment variable:
+```bash
+DATA_FILE=/path/to/todos.json npm start
+```
+
+Default location: `./data/todos.json`
 
 ## Features in Detail
 
@@ -111,6 +129,7 @@ DELETE /api/todos/completed/all
 ### Backend
 - RESTful API architecture
 - Express middleware for parsing JSON
+- File-based data persistence
 - CORS-ready
 - Error handling
 - Input validation
