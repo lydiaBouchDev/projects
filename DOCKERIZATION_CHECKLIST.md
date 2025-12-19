@@ -440,14 +440,86 @@ docker volume prune
 - [ ] docs/SECURITY.md (5 pts) → _____ / 5
 **Total Documentation** : _____ / 15
 
-### Bonus (10 points max)
+### Bonus (15 points max)
+- [ ] Migration MongoDB (5 pts) → _____ / 5
 - [ ] Scripts automatisation (3 pts) → _____ / 3
 - [ ] Image < 100 MB (3 pts) → _____ / 3
 - [ ] Tests automatisés (2 pts) → _____ / 2
 - [ ] Doc exemplaire (2 pts) → _____ / 2
-**Total Bonus** : _____ / 10
+**Total Bonus** : _____ / 15
 
 **SCORE TOTAL** : _____ / 100 (+ bonus)
+
+---
+
+## 🎁 Bonus : Migration vers MongoDB (Optionnel)
+
+Si vous souhaitez aller plus loin et implémenter une solution plus robuste avec MongoDB :
+
+### Étapes de Migration vers MongoDB
+
+**1. Ajouter le service MongoDB à docker-compose.yml**
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/todoapp
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7-alpine
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=todoapp
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+```
+
+**2. Installer Mongoose**
+```bash
+npm install mongoose
+```
+
+**3. Créer le modèle Todo**
+Créer `models/Todo.js` :
+```javascript
+const mongoose = require('mongoose');
+
+const todoSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: Date
+});
+
+module.exports = mongoose.model('Todo', todoSchema);
+```
+
+**4. Adapter server.js**
+- Remplacer les fonctions de fichier par Mongoose
+- Connecter à MongoDB au démarrage
+- Adapter toutes les routes CRUD
+
+**5. Documenter la migration**
+Créer `docs/DATABASE.md` avec :
+- Raisons de la migration
+- Architecture MongoDB
+- Guide de configuration
+- Commandes de backup/restore
+
+**Avantages de cette migration :**
+- ✅ Meilleure performance avec grands volumes
+- ✅ Gestion native de la concurrence
+- ✅ Requêtes avancées et indexation
+- ✅ Outils de monitoring professionnels
 
 ---
 

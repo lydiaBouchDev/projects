@@ -374,10 +374,126 @@ NODE_ENV=production
 PORT=3000
 APP_NAME=nodejs-todo-app
 
+# Persistance des données
+DATA_FILE=/app/data/todos.json
+
 # Docker (optionnel)
 DOCKER_IMAGE_NAME=nodejs-todo-app
 DOCKER_IMAGE_TAG=latest
 ```
+
+### 4.4 Gestion de la Persistance des Données
+
+#### Approche Actuelle : Volume Docker avec Fichier JSON
+
+L'application utilise actuellement un **volume Docker** pour persister les données des todos dans un fichier JSON :
+
+**Caractéristiques :**
+- 📁 **Stockage** : Fichier JSON (`/app/data/todos.json`)
+- 💾 **Volume Docker** : Named volume `todo-data` monté sur `/app/data`
+- 🔄 **Sauvegarde automatique** : Après chaque opération CRUD
+- 🚀 **Avantages** :
+  - Simple à implémenter et maintenir
+  - Pas de dépendances externes
+  - Image Docker légère
+  - Backup/restore facile (simple copie de fichier)
+  - Adapté pour volumes de données faibles à moyens
+
+**Configuration dans docker-compose.yml :**
+```yaml
+services:
+  app:
+    volumes:
+      - todo-data:/app/data    # Volume persistant
+    environment:
+      - DATA_FILE=/app/data/todos.json
+
+volumes:
+  todo-data:                    # Volume Docker nommé
+```
+
+#### 🚀 Évolution Recommandée : Base de Données NoSQL (MongoDB)
+
+**Pour un projet en production ou avec plus de charge**, il est recommandé d'évoluer vers une base de données NoSQL comme MongoDB :
+
+**Avantages de MongoDB :**
+- ✅ **Performance** : Meilleure gestion de volumes de données importants
+- ✅ **Concurrence** : Gestion native des accès simultanés
+- ✅ **Scalabilité** : Possibilité de réplication et sharding
+- ✅ **Requêtes avancées** : Agrégation, indexation, recherche full-text
+- ✅ **Transactions** : Support ACID pour opérations complexes
+- ✅ **Outils** : Monitoring, backup, administration professionnels
+
+**Configuration Docker Compose avec MongoDB :**
+```yaml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/todoapp
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7-alpine
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=todoapp
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo-data:
+```
+
+**Modifications Backend Requises :**
+```javascript
+// Ajouter mongoose aux dépendances
+// npm install mongoose
+
+const mongoose = require('mongoose');
+
+// Modèle Todo
+const todoSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: Date
+});
+
+const Todo = mongoose.model('Todo', todoSchema);
+
+// Connexion à MongoDB
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/todoapp');
+```
+
+**Comparaison des Approches :**
+
+| Critère | Volume JSON (Actuel) | MongoDB (Recommandé) |
+|---------|---------------------|----------------------|
+| **Complexité** | Simple ⭐⭐⭐ | Moyenne ⭐⭐ |
+| **Performance** | Bonne (<1000 todos) | Excellente (illimité) |
+| **Scalabilité** | Limitée | Excellente |
+| **Taille Image** | Légère (~150 MB) | +100 MB (service séparé) |
+| **Concurrence** | Risque de race conditions | Gestion native |
+| **Backup** | Fichier unique | Outils dédiés |
+| **Adapté pour** | Dev, Petits projets | Production, Scale |
+
+#### 💡 Recommandation pour ce Projet
+
+**Pour le projet de 7 heures :**
+- ✅ **Utiliser le volume JSON** (approche actuelle)
+- Simple et fonctionnel pour démonstration
+- Focus sur Docker, optimisation et sécurité
+
+**Pour évolution future / projet réel :**
+- 🚀 **Migrer vers MongoDB**
+- Ajouter comme bonus (+5 points)
+- Documenter la migration dans docs/DATABASE.md
 
 ## 5. Planning de Réalisation (7 heures)
 
@@ -529,7 +645,12 @@ DOCKER_IMAGE_TAG=latest
 - docs/DOCKER.md complet (5 pts)
 - docs/SECURITY.md avec rapport (5 pts)
 
-### Bonus (max 10 points)
+### Bonus (max 15 points)
+- Migration vers MongoDB (+5 pts)
+  - Service MongoDB dans docker-compose
+  - Backend adapté avec Mongoose
+  - Documentation de la migration
+  - Tests de persistance avec MongoDB
 - Scripts d'automatisation (+3 pts)
 - Optimisation avancée (< 100 MB) (+3 pts)
 - Tests automatisés (+2 pts)

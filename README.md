@@ -151,21 +151,30 @@ Un projet de containerisation optimisée est en cours pour cette application (du
 
 ### Planning (7 heures)
 
-1. **Phase 1** (2h30) : Dockerisation de base - Dockerfile multi-stage + Docker Compose
+1. **Phase 1** (2h30) : Dockerisation de base - Dockerfile multi-stage + Docker Compose avec volume
 2. **Phase 2** (1h30) : Optimisation - Réduction taille, layer caching
 3. **Phase 3** (2h) : Sécurité - Scans Trivy/Hadolint, corrections
 4. **Phase 4** (1h) : Documentation - README, docs/DOCKER.md, docs/SECURITY.md
 
+### Bonus Optionnel
+
+- 🎁 **Migration vers MongoDB** (+5 pts) : Remplacer le volume JSON par une base de données NoSQL
+  - Service MongoDB dans docker-compose
+  - Backend adapté avec Mongoose
+  - Meilleure scalabilité et performance
+  - Documentation complète de la migration
+
 ## Future Enhancements
 
-- [ ] Database integration (MongoDB, PostgreSQL)
-- [ ] User authentication
+- [ ] **MongoDB integration** (bonus du projet Docker - voir énoncé)
+- [ ] User authentication & authorization
 - [ ] Todo categories/tags
 - [ ] Due dates and reminders
 - [ ] Search functionality
 - [ ] Drag and drop reordering
 - [ ] Dark mode toggle
 - [ ] Export/import todos
+- [ ] Collaborative features
 
 ## License
 
